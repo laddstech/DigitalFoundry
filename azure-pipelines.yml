@@ -114,4 +114,4 @@ stages:
             command: 'push'
             packagesToPush: '$(System.ArtifactsDirectory)/packages/*.nupkg'
             nuGetFeedType: 'internal'
-            publishVstsFeed: 'f9a3ba6c-3ffc-42f5-9f8a-30e9c233099f'
+            publishVstsFeed: 'b44157a6-a3c5-4493-a91b-cef6352af6ee/d7b6d50a-f665-41d8-a8c2-2f5be3a41958'
