@@ -1,0 +1,116 @@
+trigger:
+ branches:
+    include:
+    - main
+
+pr: 
+ branches:
+   include:
+     - main
+     - r/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  isRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/r/')]
+  isPr: $[startsWith(variables['Build.SourceBranch'], 'refs/pull')]
+  buildRevision: $[counter(variables['Build.SourceVersion'], 0)]
+
+stages:
+  - stage: Prepare
+    jobs:
+    - job:       
+      pool: 
+        vmImage: ubuntu-latest
+      steps:
+        - bash: |
+            str=$(Build.SourceBranch)
+            echo $str
+            if [[ $str =~ ([0-9]+.[0-9]+.[0-9]+)(-[0-9a-zA-Z]+)? ]]; then
+              versionSuffix=${BASH_REMATCH[1]}
+              versionPrefix=${BASH_REMATCH[2]}
+              echo "##vso[build.updatebuildnumber]$versionSuffix.$(buildRevision)$versionPrefix"
+            else
+              echo "Could not determine release build number from branch name."
+              exit 1
+            fi
+          workingDirectory: $(Build.SourcesDirectory)
+          displayName: Determine build number from release branch name
+          condition: eq(variables.isRelease, true)
+
+        - bash: |
+            short_hash=`git rev-parse --short=8 HEAD`
+            echo "##vso[build.updatebuildnumber]1.0.0-pr.$short_hash"
+          workingDirectory: $(Build.SourcesDirectory)
+          displayName: Determine PR build number
+          condition: eq(variables.isPr, true)
+
+        - bash: |
+            short_hash=`git rev-parse --short=8 HEAD`
+            echo "##vso[build.updatebuildnumber]1.0.0.$(buildRevision)-dev.$short_hash"
+          workingDirectory: $(Build.SourcesDirectory)
+          displayName: Determine build number
+          condition: and(eq(variables.isRelease, false), eq(variables.isPr, false))
+          
+          
+
+  - stage: Build
+    jobs:
+    - job:
+      displayName: Build Libraries
+      pool: 
+        vmImage: ubuntu-latest
+      steps:
+      - task: DotNetCoreCLI@2
+        inputs:
+            command: 'restore'
+            projects: '**/libraries/**/*.csproj'
+            feedsToUse: 'select'
+            
+      - task: DotNetCoreCLI@2
+        inputs:
+          command: 'build'
+          projects: '**/libraries/**/*.csproj'
+          arguments: '/p:Version=$(Build.BuildNumber)'
+
+      - task: DotNetCoreCLI@2
+        inputs:
+          command: 'test'
+          projects: '**/libraries/**/*.csproj'
+
+      - task: DotNetCoreCLI@2
+        inputs:
+          command: 'pack'
+          packagesToPack: '**/libraries/**/*.csproj'
+          versioningScheme: 'byEnvVar'
+          versionEnvVar: 'build.buildnumber'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'packages'
+          publishLocation: 'Container'
+
+    
+  - stage: Deploy
+    displayName: Deploy to Internal Feed
+    condition: eq(variables.isPr, false)
+    jobs:
+      - job: 
+        pool: 
+            vmImage: ubuntu-latest
+        displayName: Publish to internal feed
+        steps:
+        - task: DownloadBuildArtifacts@1
+          inputs:
+            buildType: 'current'
+            downloadType: 'single'
+            artifactName: 'packages'
+            downloadPath: '$(System.ArtifactsDirectory)'
+
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'push'
+            packagesToPush: '$(System.ArtifactsDirectory)/packages/*.nupkg'
+            nuGetFeedType: 'internal'
+            publishVstsFeed: 'f9a3ba6c-3ffc-42f5-9f8a-30e9c233099f'
