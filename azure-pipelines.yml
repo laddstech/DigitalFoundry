@@ -64,9 +64,10 @@ stages:
       steps:
       - task: DotNetCoreCLI@2
         inputs:
-            command: 'restore'
-            projects: '**/libraries/**/*.csproj'
-            feedsToUse: 'select'
+          command: 'restore'
+          projects: '**/libraries/**/*.csproj'
+          feedsToUse: 'select'
+          vstsFeed: 'f9a3ba6c-3ffc-42f5-9f8a-30e9c233099f'
             
       - task: DotNetCoreCLI@2
         inputs:
