@@ -25,6 +25,13 @@ stages:
         vmImage: ubuntu-latest
       steps:
         - bash: |
+            short_hash=`git rev-parse --short=8 HEAD`
+            echo "##vso[build.updatebuildnumber]1.0.0.$(buildRevision)-dev.$short_hash"
+          workingDirectory: $(Build.SourcesDirectory)
+          displayName: Determine build number
+          condition: and(eq(variables.isRelease, false), eq(variables.isPr, false))
+
+        - bash: |
             str=$(Build.SourceBranch)
             echo $str
             if [[ $str =~ ([0-9]+.[0-9]+.[0-9]+)(-[0-9a-zA-Z]+)? ]]; then
@@ -46,12 +53,7 @@ stages:
           displayName: Determine PR build number
           condition: eq(variables.isPr, true)
 
-        - bash: |
-            short_hash=`git rev-parse --short=8 HEAD`
-            echo "##vso[build.updatebuildnumber]1.0.0.$(buildRevision)-dev.$short_hash"
-          workingDirectory: $(Build.SourcesDirectory)
-          displayName: Determine build number
-          condition: and(eq(variables.isRelease, false), eq(variables.isPr, false))
+        
           
           
 
@@ -73,7 +75,6 @@ stages:
         inputs:
           command: 'build'
           projects: '**/libraries/**/*.csproj'
-          arguments: '/p:Version=$(Build.BuildNumber)'
 
       - task: DotNetCoreCLI@2
         inputs:
@@ -84,8 +85,7 @@ stages:
         inputs:
           command: 'pack'
           packagesToPack: '**/libraries/**/*.csproj'
-          versioningScheme: 'byEnvVar'
-          versionEnvVar: 'build.buildnumber'
+          versioningScheme: 'byBuildNumber'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
