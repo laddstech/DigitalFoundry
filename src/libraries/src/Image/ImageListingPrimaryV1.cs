@@ -14,8 +14,10 @@ namespace LaddsTech.DigitalFoundry
         public int ImageHeight { get; set; } = 2050;
         public string? OverlayImagePath { get; set; }
         public string? LabelFont { get; set; }
+        public int LabelFontWeight { get; set; } = 500;
         public int LabelFontHeight { get; set; } = 125;
         public string LabelColor { get; set; } = "#000000";
+        public int LabelGravity { get; set; } = (int)Gravity.Center;
         public int LabelX { get; set; }
         public int LabelY { get; set; }
         public int MontageX { get; set; } = 10;
@@ -92,15 +94,16 @@ namespace LaddsTech.DigitalFoundry
                     BackgroundColor = MagickColors.Transparent,
                     TextGravity = Gravity.West,
                     Font = Options.LabelFont,
-                    FontWeight = FontWeight.Bold,
+                    FontWeight = (FontWeight)Options.LabelFontWeight,
                     Height = Options.LabelFontHeight
                 };
 
-                var labelText = Context.Variables.GetValue<string>(listingMetadata.ShortTitle);
+                var labelText = listingMetadata.ShortTitle;
+                var labelGravity = (Gravity)Options.LabelGravity;
                 if (!string.IsNullOrEmpty(labelText))
                 {
                     var countText = new MagickImage($"label:{labelText}", readSettings);
-                    result.Composite(countText, Gravity.West, Options.LabelX, Options.LabelY, CompositeOperator.Over);
+                    result.Composite(countText, labelGravity, Options.LabelX, Options.LabelY, CompositeOperator.Over);
                 }
             }
 
