@@ -1,6 +1,7 @@
 ﻿using Flowly.Core;
 using ImageMagick;
 using LaddsTech.DigitalFoundry.Common;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -86,6 +87,9 @@ namespace LaddsTech.DigitalFoundry
             }
 
             var listingMetadata = Variables.GetValue<ListingMetadata>(ListingMetadata.VariableKey);
+            if (listingMetadata == null)
+                Logger.Warn("The listing metadata could not be retrieved. Has it been set before this step?");
+
             if (!string.IsNullOrEmpty(listingMetadata?.ShortTitle))
             {
                 var readSettings = new MagickReadSettings

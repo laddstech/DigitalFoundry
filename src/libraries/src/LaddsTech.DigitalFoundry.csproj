@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Betalgo.OpenAI" Version="7.3.1" />
-    <PackageReference Include="Flowly.Core" Version="0.0.0" />
+    <PackageReference Include="Flowly.Core" Version="1.0.0-dev.108e98fd" />
     <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="13.3.0" />
   </ItemGroup>
 
