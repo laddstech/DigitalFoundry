@@ -15,7 +15,7 @@ pool:
 variables:
   isRelease: $[startsWith(variables['Build.SourceBranch'], 'refs/heads/r/')]
   isPr: $[startsWith(variables['Build.SourceBranch'], 'refs/pull')]
-  buildRevision: $[counter(variables['Build.SourceVersion'], 0)]
+  buildRevision: $[counter(variables['Build.SourceBranch'], 0)]
 
 stages:
   - stage: Prepare
