@@ -1,5 +1,6 @@
 ﻿using Flowly.Core;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -29,27 +30,60 @@ namespace LaddsTech.DigitalFoundry
 
             var files = Directory.GetFiles(directory, Options.SearchPattern, SearchOption.AllDirectories).ToList();
 
-            int archiveIndex = 1;
+            var fileSizes = new Dictionary<string, long>();
+            var archives = new List<List<string>>();
 
-            while (files.Count > 0)
+
+            foreach (var file in files)
             {
-                var sourceFilePath = files.First();
-                var sourceFileName = Path.GetFileName(sourceFilePath);
+                var fileInfo = new FileInfo(file);
+                fileSizes.Add(file, fileInfo.Length);
+            }
 
-                var sourceFileLength = new FileInfo(sourceFilePath).Length;
-                var archiveFileLength = File.Exists(Path.Combine(directory, $"output_{archiveIndex}.zip")) ? new FileInfo(Path.Combine(directory, $"output_{archiveIndex}.zip")).Length : 0;
+            fileSizes = fileSizes.OrderByDescending(_ => _.Value)
+                .ToDictionary(_ => _.Key, _ => _.Value);
 
-                if (archiveFileLength + sourceFileLength > Options.MaxArchiveSize)
-                    archiveIndex++;
+            NextFit(fileSizes, archives);
 
-                var archivePath = Path.Combine(directory, $"output_{archiveIndex}.zip");
+            int archiveIndex = 1;
+            foreach ( var archive in archives)
+            {
+                var archivePath = Path.Combine(directory, $"output_{archiveIndex++}.zip");
                 using var currentArchive = ZipFile.Open(archivePath, ZipArchiveMode.Update);
 
-                currentArchive.CreateEntryFromFile(sourceFilePath, sourceFileName, CompressionLevel.Optimal);
-                files.RemoveAt(0);
+                foreach ( var file in archive)
+                {
+                    var sourceFileName = Path.GetFileName(file);
+                    currentArchive.CreateEntryFromFile(file, sourceFileName, CompressionLevel.Optimal);
+                }
             }
 
             return new ValueTask();
+        }
+
+        private int NextFit(Dictionary<string, long> files, List<List<string>> archives)
+        {
+            archives.Clear();
+
+            long capacity = Options.MaxArchiveSize;
+            var currentArchive = new List<string>();
+            foreach(var file in files) 
+            {
+                if (file.Value > capacity)
+                {
+                    capacity = Options.MaxArchiveSize - file.Value;
+                    currentArchive = new List<string>();
+                    currentArchive.Add(file.Key);
+                    archives.Add(currentArchive);
+                } 
+                else
+                {
+                    currentArchive.Add(file.Key);   
+                    capacity -= file.Value;
+                }
+            }
+
+            return archives.Count;
         }
     }
 }
