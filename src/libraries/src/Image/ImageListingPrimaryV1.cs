@@ -86,7 +86,7 @@ namespace LaddsTech.DigitalFoundry
                 result.Composite(overlay, Gravity.Center, CompositeOperator.Over);
             }
 
-            var listingMetadata = Variables.GetValue<ListingMetadata>(ListingMetadata.VariableKey);
+            var listingMetadata = Context.Variables.GetValue<ListingMetadata>(ListingMetadata.VariableKey);
             if (listingMetadata == null)
                 Logger.Warn("The listing metadata could not be retrieved. Has it been set before this step?");
 
