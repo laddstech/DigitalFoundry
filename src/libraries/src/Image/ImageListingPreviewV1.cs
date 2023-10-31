@@ -94,7 +94,7 @@ namespace LaddsTech.DigitalFoundry
 
         protected virtual Task<IMagickImage> CreatePreviewImageAsync(MagickImageCollection collection)
         {
-            IMagickImage image = new MagickImage(MagickColors.None, Options.ImageWidth, Options.ImageWidth);
+            IMagickImage image = new MagickImage(MagickColors.None, Options.ImageWidth, Options.ImageHeight);
             var first = collection[0];
             first.Resize(new MagickGeometry()
             {
