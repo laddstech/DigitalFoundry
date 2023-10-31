@@ -85,7 +85,8 @@ stages:
         inputs:
           command: 'pack'
           packagesToPack: '**/libraries/**/*.csproj'
-          versioningScheme: 'byBuildNumber'
+          versioningScheme: 'byEnvVar'
+          versionEnvVar: 'build.buildnumber'
       - task: PublishBuildArtifacts@1
         inputs:
           PathtoPublish: '$(Build.ArtifactStagingDirectory)'
