@@ -45,6 +45,11 @@ namespace LaddsTech.DigitalFoundry
 
             NextFit(fileSizes, archives);
 
+            if (archives.SelectMany(s => s).Count() != files.Count)
+            {
+                Logger.Error($"Something went wrong with fitting algorithm, there is a mismatch in file counts.");
+            }
+
             int archiveIndex = 1;
             foreach ( var archive in archives)
             {
@@ -66,7 +71,10 @@ namespace LaddsTech.DigitalFoundry
             archives.Clear();
 
             long capacity = Options.MaxArchiveSize;
+
             var currentArchive = new List<string>();
+            archives.Add(currentArchive);
+
             foreach(var file in files) 
             {
                 if (file.Value > capacity)
@@ -82,9 +90,6 @@ namespace LaddsTech.DigitalFoundry
                     capacity -= file.Value;
                 }
             }
-
-            if (currentArchive.Any())
-                archives.Add(currentArchive);
 
             return archives.Count;
         }
