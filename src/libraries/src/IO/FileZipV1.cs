@@ -83,6 +83,9 @@ namespace LaddsTech.DigitalFoundry
                 }
             }
 
+            if (currentArchive.Any())
+                archives.Add(currentArchive);
+
             return archives.Count;
         }
     }
