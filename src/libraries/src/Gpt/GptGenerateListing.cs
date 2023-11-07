@@ -17,6 +17,9 @@ namespace LaddsTech.DigitalFoundry
         public string TitleFormat { get; set; } = "{0}";
         public string DescriptionFormat { get; set; } = "{0}";
         public string[] Prompts { get; set; } = Array.Empty<string>();
+        public string[] Examples { get; set; } = Array.Empty<string>();
+        public float? TopP { get; set; }
+        public float? Temperature { get; set; }
     }
 
     public class GptGenerateListing : GptBaseStep<GptGenerateListingOptions>
@@ -45,12 +48,16 @@ namespace LaddsTech.DigitalFoundry
                 ChatMessage.FromSystem("{\"title\": \"..\", \"description\": \"..\", \"short_title\": \"..\", \"keywords\": [\"..\", \"..\"] } ")
             });
 
+            requestMessages.AddRange(Options.Examples.Select(prompt => ChatMessage.FromAssistant(prompt)));
+
             requestMessages.Add(ChatMessage.FromUser(listingMetadata.GenerationMetadata.Description));
 
             var request = new ChatCompletionCreateRequest
             {
                 Messages = requestMessages,
                 Model = Models.Gpt_3_5_Turbo_16k,
+                TopP = Options.TopP,
+                Temperature = Options.Temperature
             };
 
             var response = await GetJsonCompletionAsync<ProductListingCompletionResult>(service, request);
