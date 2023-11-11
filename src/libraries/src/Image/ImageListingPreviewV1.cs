@@ -12,6 +12,8 @@ namespace LaddsTech.DigitalFoundry
     {
         public int ImageWidth { get; set; } = 2700;
         public int ImageHeight { get; set; } = 2050;
+        public int? BorderWidth { get; set; }
+        public string? BorderColor { get; set; }
     }
 
 
@@ -109,6 +111,13 @@ namespace LaddsTech.DigitalFoundry
                 var previewSettings = PreviewSettings[Math.Min(i - 1, PreviewSettings.Count - 1)];
                 var second = collection[i];
                 second.BackgroundColor = MagickColors.Transparent;
+
+                if (Options.BorderWidth.HasValue)
+                {
+                    second.BorderColor = new MagickColor(Options.BorderColor ?? "#ffffff");
+                    second.Border(Options.BorderWidth.Value);
+                }
+                
 
                 var shadow = second.Clone();
                 shadow.Shadow(0, 0, 25, new Percentage(50), MagickColors.Black);

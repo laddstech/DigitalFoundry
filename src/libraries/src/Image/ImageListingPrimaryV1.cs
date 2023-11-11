@@ -23,6 +23,8 @@ namespace LaddsTech.DigitalFoundry
         public int LabelY { get; set; }
         public int MontageX { get; set; } = 10;
         public int MontageY { get; set; } = 1;
+        public int MontageBorderX { get; set; } = 0;
+        public int MontageBorderY { get; set; } = 0;
     }
 
 
@@ -53,7 +55,8 @@ namespace LaddsTech.DigitalFoundry
                     Width = 100,
                     Height = 100,
                     IsPercentage = true,
-                    X = 0
+                    X = Options.MontageBorderX, 
+                    Y = Options.MontageBorderY,
                 },
                 TileGeometry = new MagickGeometry(0, 0, Options.MontageX, Options.MontageY),
 
@@ -71,7 +74,7 @@ namespace LaddsTech.DigitalFoundry
 
             result.Resize(new MagickGeometry
             {
-                Width = Options.ImageWidth
+                Width = Options.ImageWidth + (2 * Options.MontageBorderX)
             });
             result.Crop(new MagickGeometry { Width = Options.ImageWidth, Height = Options.ImageHeight }, Gravity.Center);
 
