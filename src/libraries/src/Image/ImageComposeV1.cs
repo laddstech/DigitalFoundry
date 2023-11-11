@@ -16,7 +16,7 @@ namespace LaddsTech.DigitalFoundry
         public int ImageHeight { get; set; } = 2048;
 
         public string OutputPath { get; set; } = "test.png";
-        public List<Layer> Layers { get; set; } = new List<Layer>();
+        public Layer[] Layers { get; set; } = Array.Empty<Layer>();
 
         public class Layer
         {
