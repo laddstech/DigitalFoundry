@@ -1,10 +1,7 @@
 ﻿using Flowly.Core;
 using ImageMagick;
-using OpenAI.ObjectModels.ResponseModels;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using static LaddsTech.DigitalFoundry.ImageComposeOptions;
 
@@ -27,6 +24,24 @@ namespace LaddsTech.DigitalFoundry
             public int OffsetX { get; set; } = 0;
             public int OffsetY { get; set; } = 0;
             public double[]? Distort { get; set; }
+
+           public Label? Label { get; set; }
+
+            public CompositeOperator Operator { get; set; } = CompositeOperator.Over;
+        }
+
+        public class Label
+        {
+            public string Text { get; set; }
+            public double FontSize { get; set; } = 16;
+            public string? Font { get; set; }
+            public int? Width { get; set; }
+            public int? Height { get; set; }
+            public int FontWeight { get; set; } = 500;
+            public string Color { get; set; } = "#000000";
+            public Gravity Gravity { get; set; } = Gravity.Center; 
+            public int X { get; set; }
+            public int Y { get; set; }
         }
     }
 
@@ -47,12 +62,8 @@ namespace LaddsTech.DigitalFoundry
 
             foreach(var layer in Options.Layers)
             {
-                if (string.IsNullOrEmpty(layer.LayerImagePath)) {
-                    continue;
-                }
-
                 var layerImage = CreateLayer(layer);
-                baseImage.Composite(layerImage, CompositeOperator.Multiply);
+                baseImage.Composite(layerImage, layer.Operator);
             }
 
 
@@ -63,9 +74,6 @@ namespace LaddsTech.DigitalFoundry
 
         private IMagickImage CreateLayer(Layer layer)
         {
-            if (string.IsNullOrEmpty(layer.LayerImagePath)) 
-                throw new ArgumentNullException(nameof(layer.LayerImagePath));
-
             var readSettings = new MagickReadSettings
             {
                 FillColor = MagickColors.Transparent,
@@ -76,20 +84,49 @@ namespace LaddsTech.DigitalFoundry
 
             var image = new MagickImage("xc:transparent", readSettings);
 
-            var layerImage = new MagickImage(layer.LayerImagePath);
+            if (!string.IsNullOrEmpty(layer.LayerImagePath))
+            {
+                if (!Path.IsPathRooted(layer.LayerImagePath))
+                    layer.LayerImagePath = Path.Combine(Context.WorkingDirectory, layer.LayerImagePath);
+
+                var layerImage = new MagickImage(layer.LayerImagePath);
+                image.Composite(layerImage, layer.OffsetX, layer.OffsetY, CompositeOperator.Over);
+            }
+            
+
+            if (layer.Label != null)
+            {
+                readSettings = new MagickReadSettings
+                {
+                    FillColor = new MagickColor(layer.Label.Color),
+                    BackgroundColor = MagickColors.Transparent,
+                    TextGravity = layer.Label.Gravity,
+                    Font = layer.Label.Font,
+                    FontWeight = (FontWeight)layer.Label.FontWeight,
+                    Width= layer.Label.Width,
+                    Height = layer.Label.Height,
+                    FontPointsize = layer.Label.FontSize
+
+                };
+
+                var labelText = layer.Label.Text;
+                var labelGravity = (Gravity)layer.Label.Gravity;
+                if (!string.IsNullOrEmpty(labelText))
+                {
+                    var countText = new MagickImage($"caption:{labelText}", readSettings);
+                    image.Composite(countText, labelGravity, layer.Label.X, layer.Label.Y, CompositeOperator.Over);
+                }
+            }
+            
             
             if (layer.Rotation.HasValue)
-                layerImage.Rotate(layer.Rotation.Value);
+                image.Rotate(layer.Rotation.Value);
 
             if (layer.Scale.HasValue)
-                layerImage.Scale(new Percentage(layer.Scale.Value));
+                image.Scale(new Percentage(layer.Scale.Value));
 
             if (layer.Distort != null)
-                layerImage.Distort(DistortMethod.Perspective, layer.Distort);
-
-            image.Composite(layerImage, layer.OffsetX, layer.OffsetY, CompositeOperator.Over);
-
-            //image.BackgroundColor = MagickColors.Transparent;   
+                image.Distort(DistortMethod.Perspective, layer.Distort);
 
             if (!string.IsNullOrEmpty(layer.LayerAlphaMaskPath))
             {
