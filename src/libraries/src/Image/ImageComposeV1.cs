@@ -90,6 +90,16 @@ namespace LaddsTech.DigitalFoundry
                     layer.LayerImagePath = Path.Combine(Context.WorkingDirectory, layer.LayerImagePath);
 
                 var layerImage = new MagickImage(layer.LayerImagePath);
+
+                if (layer.Rotation.HasValue)
+                    layerImage.Rotate(layer.Rotation.Value);
+
+                if (layer.Scale.HasValue)
+                    layerImage.Scale(new Percentage(layer.Scale.Value));
+
+                if (layer.Distort != null)
+                    layerImage.Distort(DistortMethod.Perspective, layer.Distort);
+
                 image.Composite(layerImage, layer.OffsetX, layer.OffsetY, CompositeOperator.Over);
             }
             
@@ -114,19 +124,21 @@ namespace LaddsTech.DigitalFoundry
                 if (!string.IsNullOrEmpty(labelText))
                 {
                     var countText = new MagickImage($"caption:{labelText}", readSettings);
+                    if (layer.Rotation.HasValue)
+                        countText.Rotate(layer.Rotation.Value);
+
+                    if (layer.Scale.HasValue)
+                        countText.Scale(new Percentage(layer.Scale.Value));
+
+                    if (layer.Distort != null)
+                        countText.Distort(DistortMethod.Perspective, layer.Distort);
+
                     image.Composite(countText, labelGravity, layer.Label.X, layer.Label.Y, CompositeOperator.Over);
                 }
             }
             
             
-            if (layer.Rotation.HasValue)
-                image.Rotate(layer.Rotation.Value);
-
-            if (layer.Scale.HasValue)
-                image.Scale(new Percentage(layer.Scale.Value));
-
-            if (layer.Distort != null)
-                image.Distort(DistortMethod.Perspective, layer.Distort);
+            
 
             if (!string.IsNullOrEmpty(layer.LayerAlphaMaskPath))
             {
